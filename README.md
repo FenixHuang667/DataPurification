@@ -56,4 +56,4 @@ The mapping between scripts and figures is as follows:
 The project is implemented in Python. To install all required dependencies, run:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirement.txt
