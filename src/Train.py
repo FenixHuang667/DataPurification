@@ -37,7 +37,7 @@ def train_model_image(train_loader, output_dim=10, num_classes=10, target_loss=0
 
     from src.LoadImage import LeNetEncoder, Classifier, LogisticRegressionImage
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
 
     #Use LetNet
     #encoder = LeNetEncoder(output_dim=output_dim).to(device)
@@ -103,8 +103,8 @@ def train_logistic_regression(dataloader, input_size, num_classes,
 
     # set_determinestic(seed = 42)
 
-    model = LogisticRegression(input_size, num_classes)
-    # model = MLPVote(input_size, num_classes)
+    #model = LogisticRegression(input_size, num_classes)
+    model = MLPVote(input_size, num_classes)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
