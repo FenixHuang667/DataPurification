@@ -89,6 +89,24 @@ class LogisticRegressionImage(nn.Module):
         return features, logits
 
 
+class MLPImage(nn.Module):
+    def __init__(self, input_size=784, num_classes=10):
+        super(MLPImage, self).__init__()
+        self.fc1 = nn.Linear(input_size, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, num_classes)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = x.view(x.size(0), -1)          # [B, 784]
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        features = self.relu(self.fc3(x))  # [B, 64]
+        logits = self.fc4(features)        # [B, num_classes]
+        return features, logits
+
+
 ######### Load raw MNIST-MIX data, with specific digits, language, and number of data
 def load_images(
         digits=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],

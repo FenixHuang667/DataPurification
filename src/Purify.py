@@ -28,7 +28,7 @@ def find_top_removal_potential(X, y, partition_array, models, k, t, batch_size=6
         top_potentials: List of t potential values after each removal
     """
     if device is None:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = torch.device('cpu')
 
     dataloader = extract_partition_dataloader(X, y, partition_array, k, batch_size, shuffle=False)
 
@@ -97,7 +97,7 @@ def find_top_removal_influence(X, y, partition_array, models, k, t, batch_size=6
         top_indices: List of t indices in original dataset with highest diagonal influence
     """
     if device is None:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = torch.device('cpu')
 
     from src.Variance import compute_influence_matrix
 
@@ -434,7 +434,7 @@ def find_top_removal_potential_image(images, labels, partition_array, models, k,
         top_potentials: List of t potential values after each removal
     """
     if device is None:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = torch.device('cpu')
 
     mask_partition = partition_array == k
     images_partition = images[mask_partition]
@@ -503,7 +503,7 @@ def find_top_removal_influence_image(images, labels, partition_array, models, k,
         top_indices: List of t indices in original dataset with highest diagonal influence
     """
     if device is None:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = torch.device('cpu')
 
     from src.Variance import compute_influence_matrix
     mask_partition = partition_array == k

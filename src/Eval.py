@@ -20,7 +20,7 @@ def evaluate_model(model, test_loader):
     Returns:
         accuracy: Test accuracy (percentage)
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
     model.to(device)
     model.eval()
 
@@ -52,7 +52,7 @@ def compute_losses(model, test_loader):
         individual_losses: numpy array of loss for each point
         total_loss: float, average loss over all points
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
     model.to(device)
     model.eval()
 
