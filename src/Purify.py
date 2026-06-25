@@ -174,13 +174,11 @@ def iterative_removal_partitions(X, y, partition_array, models, max_iterations, 
     return partition_array, removal_records
 
 
-
-
 def Removal_process_vote(X, y, partition_array, models, max_iterations,
-                                 test_loader = None, removal_method='top_p', t=10,
-                                 input_size=None, num_classes=None, target_acc=0.99, lr=0.001,
-                                 max_epochs=1000, verbose=False,
-                                 outlier_indices=None, batch_size=64, device=None):
+                         test_loader=None, removal_method='top_p', t=10,
+                         input_size=None, num_classes=None, target_acc=0.99, lr=0.001,
+                         max_epochs=1000, verbose=False, potential_tol=None,
+                         outlier_indices=None, batch_size=64, device=None):
     """
     Iteratively remove data points from each partition based on different methods.
 
@@ -198,6 +196,11 @@ def Removal_process_vote(X, y, partition_array, models, max_iterations,
         lr: Learning rate for model retraining
         max_epochs: Maximum epochs for model retraining
         verbose: Verbose flag for model retraining
+        potential_tol: If set, stop a partition's removal when the relative change
+            in potential between consecutive iterations, |Δpotential|/potential,
+            falls below this value (e.g. 0.001). Applies to 'top_p' and 'top_i'.
+            Removal also stops at max_iterations (max removal steps), whichever
+            comes first. The per-iteration rel_change is printed each step.
         outlier_indices: List/array of outlier indices (if None, no outlier checking)
         batch_size: Batch size for DataLoader
         device: Device to use
@@ -250,6 +253,24 @@ def Removal_process_vote(X, y, partition_array, models, max_iterations,
                 n = np.sum(partition_array != 0)
                 print(f"{iteration},{n},{original_potential:.6f},{acc:.4f}")
 
+                # Stopping criteria (stop at whichever triggers first):
+                #   (1) relative potential change |dP|/P < potential_tol  (convergence)
+                #   (2) max removal steps reached  (the max_iterations loop bound)
+                if iteration == 0:
+                    prev_potential = None
+                if prev_potential is None:
+                    print(f"Partition {k}: iteration {iteration}, rel_change=NA (baseline)")
+                else:
+                    rel_change = (prev_potential - original_potential) / original_potential
+                    print(f"Partition {k}: iteration {iteration}, rel_change={rel_change:.6f}")
+                    if potential_tol is not None and rel_change < potential_tol:
+                        print(f"Partition {k}: stopping (potential converged: "
+                              f"{rel_change:.6f} < {potential_tol})")
+                        break
+                if iteration == max_iterations - 1:
+                    print(f"Partition {k}: stopping (reached max removal steps: {max_iterations})")
+                prev_potential = original_potential
+
                 for removed_idx in top_indices:
                     if outlier_indices is not None:
                         is_outlier = int(removed_idx in outlier_indices)
@@ -276,6 +297,24 @@ def Removal_process_vote(X, y, partition_array, models, max_iterations,
 
                 # print(f"Dim: {n}, Original potential: {original_potential:.6f}")
                 print(f"{iteration},{n},{original_potential:.6f},{acc:.4f}")
+
+                # Stopping criteria (stop at whichever triggers first):
+                #   (1) relative potential change |dP|/P < potential_tol  (convergence)
+                #   (2) max removal steps reached  (the max_iterations loop bound)
+                if iteration == 0:
+                    prev_potential = None
+                if prev_potential is None:
+                    print(f"Partition {k}: iteration {iteration}, rel_change=NA (baseline)")
+                else:
+                    rel_change = (prev_potential - original_potential) / original_potential
+                    print(f"Partition {k}: iteration {iteration}, delta_p = {prev_potential - original_potential}, current_p = {original_potential}, rel_change={rel_change:.6f}")
+                    if potential_tol is not None and rel_change < potential_tol:
+                        print(f"Partition {k}: stopping (potential converged: "
+                              f"{rel_change:.6f} < {potential_tol})")
+                        break
+                if iteration == max_iterations - 1:
+                    print(f"Partition {k}: stopping (reached max removal steps: {max_iterations})")
+                prev_potential = original_potential
 
                 top_indices = find_top_removal_influence(
                     X, y, partition_array, models, k, t=t, batch_size=batch_size, device=device

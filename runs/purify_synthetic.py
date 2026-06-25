@@ -75,7 +75,6 @@ if __name__ == "__main__":
     label_columns = 'Q10'
     batch_size = 64
 
-
     X_full, y_full = load_voting_csv(
         csv_file=data_path,
         feature_cols=feature_columns,
@@ -103,9 +102,8 @@ if __name__ == "__main__":
 
     print(f"Full model acc: {accuracy_fm}")
 
-
     parition = generate_random_partition(len(X_full), 1)
-    
+
     data_loader_sub1 = extract_partition_dataloader(X_full, y_full, parition, 1, batch_size)
 
     model1, loss = train_logistic_regression(data_loader_sub1, input_size, num_classes)
@@ -113,12 +111,35 @@ if __name__ == "__main__":
 
     print(f"S1:{len(data_loader_sub1.dataset)}  Model 1 acc: {accuracy_m1:.4f}  loss: {loss:.4f}")
 
-
     models = [None, model1]
 
+    # Purification stops at whichever comes first:
+    #   - potential_tol: relative change in potential |dP|/P below this (convergence)
+    #   - max_iterations: maximum number of removal steps (each step removes t points)
+    # removal_method: 'top_p' (potential-based) or 'top_i' (influence-based);
+    #   both print the per-iteration rel_change and honor the two criteria above.
     parition, removal_records = Removal_process_vote(
-        X_full, y_full, parition, models, max_iterations=90,
-        test_loader= test_loader, removal_method='top_p', t=10,
+        X_full, y_full, parition, models,
+        max_iterations=50,  # max removal steps
+        potential_tol=0.1,  # convergence tolerance
+        test_loader=test_loader, removal_method='top_i', t=10,
         input_size=input_size, num_classes=num_classes,
         batch_size=batch_size
     )
+
+    # ----- two-block clustering from purification: removed vs remainder -----
+    pred_labels = (parition != 0).astype(int)  # 0 = removed block, 1 = kept block
+
+    # Ground truth: first n_dist1 points from distribution 1, the rest from distribution 2.
+    # synthetic_train_mix_2spec.csv is a 7:3 mix -> adjust n_dist1 to your data.
+    n_dist1 = 700
+    true_labels = np.zeros(len(X_full), dtype=int)
+    true_labels[n_dist1:] = 1
+
+    from src.Cluster import adjusted_rand_index
+
+    ari = adjusted_rand_index(true_labels, pred_labels)
+
+    print(f"Removed (block 0): {(pred_labels == 0).sum()}, "
+          f"Kept (block 1): {(pred_labels == 1).sum()}")
+    print(f"Adjusted Rand Index: {ari:.4f}")

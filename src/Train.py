@@ -103,8 +103,11 @@ def train_logistic_regression(dataloader, input_size, num_classes,
 
     # set_determinestic(seed = 42)
 
-    #model = LogisticRegression(input_size, num_classes)
-    model = MLPVote(input_size, num_classes)
+    #Using LG model
+    model = LogisticRegression(input_size, num_classes)
+
+    #using MLP model
+    #model = MLPVote(input_size, num_classes)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
